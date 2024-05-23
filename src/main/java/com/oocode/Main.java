@@ -10,12 +10,9 @@ import java.io.StringReader;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.time.format.TextStyle;
 import java.util.List;
-import java.util.Locale;
 
 import static java.lang.Integer.parseInt;
-import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.toList;
 
 public class Main {
@@ -48,5 +45,17 @@ public class Main {
         }
       }
     }
+
+    // find three days ago at the start of the day
+    LocalDateTime startOfDay = today.atStartOfDay();
+    LocalDateTime threeDaysAgoOfStart = startOfDay.minusDays(3);
+
+    // check if the parsed dateTime is after threeDaysAgoOfStart and before startOfDay
+    List<String[]> filterDate = result.stream()
+            .filter(o -> {
+              LocalDateTime dateTime = LocalDateTime.ofEpochSecond(parseInt(o[2]), 0, ZoneOffset.ofHours(10));
+              return dateTime.isAfter(threeDaysAgoOfStart) && dateTime.isBefore(startOfDay);
+            })
+            .collect(toList());
   }
 }
