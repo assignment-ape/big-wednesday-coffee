@@ -28,7 +28,7 @@ public class Main {
     }
   }
 
-  private static void createPage(String url, LocalDate today) throws Exception {
+  public static void createPage(String url, LocalDate today) throws Exception {
     try (Response r = new OkHttpClient().newCall(new Request.Builder().url(url).build()).execute()) {
       if (r.isSuccessful()) {
         try (ResponseBody rb = r.body()) {
