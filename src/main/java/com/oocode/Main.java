@@ -5,8 +5,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
-
-import java.io.FileWriter;
+import java.io.FileReader;
 import java.io.StringReader;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -29,20 +28,23 @@ public class Main {
   }
 
   public static void createPage(String url, LocalDate today) throws Exception {
-    try (Response r = new OkHttpClient().newCall(new Request.Builder().url(url).build()).execute()) {
-      if (r.isSuccessful()) {
-        try (ResponseBody rb = r.body()) {
-          List<String[]> result;
-          try (CSVReader reader = new CSVReader(new StringReader(rb.string()))) {
-            result = reader.readAll().stream().skip(2).collect(toList());
+    List<String[]> result;
+    if (url.startsWith("file:")) {
+      // add URL as file path
+      try (CSVReader reader = new CSVReader(new FileReader(url.substring(5)))) {
+        result = reader.readAll().stream().skip(2).collect(toList());
+      }
+    } else {
+      // If the URL is a remote URL
+      try (Response r = new OkHttpClient().newCall(new Request.Builder().url(url).build()).execute()) {
+        if (r.isSuccessful()) {
+          try (ResponseBody rb = r.body()) {
+            try (CSVReader reader = new CSVReader(new StringReader(rb.string()))) {
+              result = reader.readAll().stream().skip(2).collect(toList());
+            }
           }
-          String[] strings = result.stream().max(comparing(o -> Double.valueOf(o[7]))).orElse(null);
-          try (FileWriter myWriter = new FileWriter("index.html")) {
-            LocalDateTime foo = LocalDateTime.ofEpochSecond(parseInt(strings[2]), 0, ZoneOffset.ofHours(10));
-            myWriter.write(
-                String.format("<html><body>You should have been at %s on %s - it was gnarly - waves up to %sm!</body></html>",
-                    strings[0], foo.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.ENGLISH), strings[7]));
-          }
+        } else {
+          throw new RuntimeException("Failed to fetch CSV data from URL: " + url);
         }
       }
     }
