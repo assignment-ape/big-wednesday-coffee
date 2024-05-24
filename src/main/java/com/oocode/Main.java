@@ -57,5 +57,9 @@ public class Main {
               return dateTime.isAfter(threeDaysAgoOfStart) && dateTime.isBefore(startOfDay);
             })
             .collect(toList());
+
+    if (filterDate.isEmpty()) {
+      throw new RuntimeException("Data is not available for the past three days");
+    }
   }
 }
