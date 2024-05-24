@@ -50,4 +50,22 @@ public class PlaceholderTest {
             assertEquals("Data is not available for the past three days", e.getMessage());
         }
     }
+
+    @Test
+    public void testCreatePageWithEmptyData() throws Exception {
+        // Path of CSV test data (invalid data)
+        String filePath = "src/test/resources/empty_data.csv";
+        String url = "file://" + new File(filePath).getAbsolutePath();
+
+        // call create page method with invalid date (future date)
+        LocalDate testDate = LocalDate.of(2024, 5, 12);
+
+        // check RuntimeException is thrown
+        try {
+            Main.createPage(url, testDate);
+            fail("Expected RuntimeException but no exception was thrown");
+        } catch (RuntimeException e) {
+            assertTrue(e instanceof RuntimeException);
+        }
+    }
 }
