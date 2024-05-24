@@ -6,13 +6,17 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.StringReader;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.format.TextStyle;
 import java.util.List;
+import java.util.Locale;
 
 import static java.lang.Integer.parseInt;
+import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.toList;
 
 public class Main {
@@ -60,6 +64,25 @@ public class Main {
 
     if (filterDate.isEmpty()) {
       throw new RuntimeException("Data is not available for the past three days");
+    }
+
+    String[] strings = filterDate.stream().max(comparing(o -> Double.valueOf(o[7]))).orElse(null);
+
+    // define latitude and longitude
+    String latitude = strings[4];
+    String longitude = strings[5];
+    String mapTitle = strings[0];
+
+    // create Google Maps link
+    String googleMapsLink = String.format("<a style=\"color: #007bff; text-decoration: none; font-weight: bold;\"" +
+                    " class=\"map-link\" target=\"_blank\" href=\"https://www.google.com/maps/search/?api=1&query=%s,%s\">" +
+                    "Open Map of %s</a>", latitude, longitude, mapTitle);
+
+    try (FileWriter myWriter = new FileWriter("index.html")) {
+      LocalDateTime foo = LocalDateTime.ofEpochSecond(parseInt(strings[2]), 0, ZoneOffset.ofHours(10));
+      myWriter.write(
+              String.format("<html><body>You should have been at %s on %s - it was gnarly - waves up to %sm! %s</body></html>",
+                      strings[0], foo.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.ENGLISH), strings[7], googleMapsLink));
     }
   }
 }
