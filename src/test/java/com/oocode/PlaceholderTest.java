@@ -68,4 +68,23 @@ public class PlaceholderTest {
             assertTrue(e instanceof RuntimeException);
         }
     }
+
+    @Test
+    public void testGoogleMapsLinkInIndexHtml() throws Exception {
+        // data with map link
+        String filePath = "src/test/resources/map_data.csv";
+        String url = "file://" + new File(filePath).getAbsolutePath();
+
+        // call createPage method with valid data and date
+        LocalDate testDate = LocalDate.of(2024, 3, 4);
+        Main.createPage(url, testDate);
+
+        // read index.html
+        List<String> lines = Files.readAllLines(Path.of("index.html"));
+        String content = String.join("\n", lines);
+
+        // check if HTML contains the expected Google Maps link
+        String expectedLink = "href=\"https://www.google.com/maps/search/?api=1&query=-28.16135,153.56055\"";
+        assertThat(content, containsString(expectedLink));
+    }
 }
