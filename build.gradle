@@ -1,11 +1,14 @@
-apply plugin: 'java'
-apply plugin: 'application'
+plugins {
+    id 'java'
+    id 'application'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
+}
 
 mainClassName = 'com.oocode.Main'
 
 version = '1.0.0'
 
-description = """WaveDays"""
+description = "WaveDays"
 
 sourceCompatibility = JavaVersion.VERSION_17
 targetCompatibility = JavaVersion.VERSION_17
@@ -14,8 +17,18 @@ tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
 }
 
-repositories {
-    mavenCentral()
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java']
+        }
+    }
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'com.oocode.Main'
+    }
 }
 
 dependencies {
