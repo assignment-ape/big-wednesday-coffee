@@ -5,9 +5,11 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.StringReader;
+
+import java.io.*;
+import java.net.InetSocketAddress;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -19,13 +21,17 @@ import static java.lang.Integer.parseInt;
 import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.toList;
 
+import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpExchange;
+
 public class Main {
   public static void main(String[] args) throws Exception {
-    if (args.length == 2) {
-      createPage(args[0], LocalDate.parse(args[1]));
-    } else {
-      createPage("https://apps.des.qld.gov.au/data-sets/waves/wave-7dayopdata.csv", LocalDate.now());
-    }
+    String url = args.length == 2 ? args[0] : "https://apps.des.qld.gov.au/data-sets/waves/wave-7dayopdata.csv";
+    LocalDate today = args.length == 2 ? LocalDate.parse(args[1]) : LocalDate.now();
+
+    createPage(url, today);
+    createAndStartServer();
   }
 
   public static void createPage(String url, LocalDate today) throws Exception {
@@ -84,5 +90,22 @@ public class Main {
               String.format("<html><body>You should have been at %s on %s - it was gnarly - waves up to %sm! %s</body></html>",
                       strings[0], foo.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.ENGLISH), strings[7], googleMapsLink));
     }
+  }
+
+  public static void createAndStartServer() throws IOException {
+    HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
+    server.createContext("/", new HttpHandler() {
+      @Override
+      public void handle(HttpExchange exchange) throws IOException {
+        byte[] response = Files.readAllBytes(Paths.get("index.html"));
+        exchange.sendResponseHeaders(200, response.length);
+        OutputStream os = exchange.getResponseBody();
+        os.write(response);
+        os.close();
+      }
+    });
+    server.setExecutor(null);
+    server.start();
+    System.out.println("Server is listening on port 8080");
   }
 }
