@@ -1,7 +1,14 @@
 plugins {
     id 'java'
     id 'application'
-    id 'com.github.johnrengelman.shadow' version '7.1.2'
+    id 'com.github.johnrengelman.shadow' version '7.1.0'
+}
+
+group 'com.oocode'
+version '1.0.0'
+
+repositories {
+    mavenCentral()
 }
 
 mainClassName = 'com.oocode.Main'
@@ -9,8 +16,10 @@ mainClassName = 'com.oocode.Main'
 version = '1.0.0'
 description = "WaveDays"
 
-sourceCompatibility = JavaVersion.VERSION_17
-targetCompatibility = JavaVersion.VERSION_17
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
 
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
@@ -26,14 +35,17 @@ sourceSets {
 
 jar {
     manifest {
-        attributes 'Main-Class': 'com.oocode.Main'
+        attributes(
+                'Main-Class': 'package.MainClass'
+        )
     }
 }
 
-shadowJar {
+task myShadowJar(type: com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
     archiveBaseName.set('WaveDays')
     archiveVersion.set('1.0.0')
     archiveClassifier.set('')
+    mainClassName = 'com.oocode.Main'
 }
 
 dependencies {
@@ -44,7 +56,6 @@ dependencies {
     testImplementation 'org.hamcrest:hamcrest-all:1.3'
     testImplementation 'com.oneeyedmen:okeydoke:1.3.3'
 }
-
-repositories {
-    mavenCentral()
-}
+distZip.dependsOn myShadowJar
+distTar.dependsOn myShadowJar
+startScripts.dependsOn myShadowJar
