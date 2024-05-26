@@ -1,15 +1,23 @@
 package com.oocode;
 import org.junit.Test;
-
+import org.mockito.ArgumentMatchers;
 import java.io.File;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
-
+import java.util.concurrent.CompletableFuture;
+import static org.mockito.ArgumentMatchers.any;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class PlaceholderTest {
 
@@ -86,5 +94,30 @@ public class PlaceholderTest {
         // check if HTML contains the expected Google Maps link
         String expectedLink = "href=\"https://www.google.com/maps/search/?api=1&query=-28.16135,153.56055\"";
         assertThat(content, containsString(expectedLink));
+    }
+
+    @Test
+    public void testCreatePageWithMockData() throws Exception {
+        List<String[]> testData = Arrays.asList(
+                new String[]{"Location", "Date", "Time", "Latitude", "Longitude", "Wave Height"},
+                new String[]{"Hay Point TriAxys", "2024-05-21", "1716608400", "-21.27760", "149.32260", "0.800"}
+        );
+
+        // create mock HttpClient and  HTTP response
+        HttpClient mockHttpClient = mock(HttpClient.class);
+        HttpResponse<String> mockHttpResponse = new MockHttpResponse(testData);
+        CompletableFuture<HttpResponse<String>> mockFuture = CompletableFuture.completedFuture(mockHttpResponse);
+        when(mockHttpClient.sendAsync(any(HttpRequest.class), ArgumentMatchers.<HttpResponse.BodyHandler<String>>any()))
+                .thenReturn(mockFuture);
+
+        // call mock Main instance with mock HttpClient
+        Main main = new Main(mockHttpClient);
+
+        // call createPage method with mock data
+        String filePath = "src/test/resources/mock_data.csv";
+        String url = "file://" + new File(filePath).getAbsolutePath();
+        main.createPage(url,  LocalDate.of(2024, 5, 21));
+        Path indexPath = Paths.get("index.html");
+        assertTrue("index.html file does not exist", Files.exists(indexPath));
     }
 }
