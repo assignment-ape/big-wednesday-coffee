@@ -71,7 +71,7 @@ public class Main {
     LocalDateTime startOfDay = today.atStartOfDay();
     LocalDateTime threeDaysAgoOfStart = startOfDay.minusDays(3);
 
-    // Filter data
+    // Check if the parsed dateTime is after threeDaysAgoOfStart and before startOfDay
     List<String[]> filterDate = result.stream()
             .filter(o -> {
               LocalDateTime dateTime = LocalDateTime.ofEpochSecond(parseInt(o[2]), 0, ZoneOffset.ofHours(10));
@@ -89,6 +89,7 @@ public class Main {
     String latitude = strings[4];
     String longitude = strings[5];
     String mapTitle = strings[0];
+    LocalDateTime waveDateTime = LocalDateTime.ofEpochSecond(parseInt(strings[2]), 0, ZoneOffset.ofHours(10));
 
     // Create Google Maps link
     String googleMapsLink = String.format(
@@ -96,11 +97,13 @@ public class Main {
                     "href=\"https://www.google.com/maps/search/?api=1&query=%s,%s\">Open Map of %s</a>",
             latitude, longitude, mapTitle);
 
-    try (FileWriter myWriter = new FileWriter("index.html")) {
-      LocalDateTime foo = LocalDateTime.ofEpochSecond(parseInt(strings[2]), 0, ZoneOffset.ofHours(10));
-      myWriter.write(
-              String.format("<html><body>You should have been at %s on %s - it was gnarly - waves up to %sm! %s</body></html>",
-                      strings[0], foo.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.ENGLISH), strings[7], googleMapsLink));
+    // create HTML content
+    String htmlContent = String.format("<html><body>You should have been at %s on %s - it was gnarly - waves up to %sm! %s</body></html>",
+            mapTitle, waveDateTime.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.ENGLISH), longitude, googleMapsLink);
+
+    // Write HTML content to file
+    try (FileWriter writer = new FileWriter("index.html")) {
+      writer.write(htmlContent);
     }
   }
 
