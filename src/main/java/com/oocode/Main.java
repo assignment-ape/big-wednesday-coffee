@@ -40,6 +40,8 @@ public class Main {
   }
 
   public static void createPage(String url, LocalDate today) throws Exception {
+    LocalDate threeDaysAgo = today.minusDays(3);
+
     List<String[]> result;
     if (url == null || url.isEmpty()) {
       throw new IllegalArgumentException("URL cannot be null or empty");
@@ -66,16 +68,12 @@ public class Main {
     }
 
     // Find three days ago at the start of the day
-    LocalDateTime startOfDay = today.atStartOfDay();
-    LocalDateTime threeDaysAgoOfStart = startOfDay.minusDays(3);
-
-    // Check if the parsed dateTime is after threeDaysAgoOfStart and before startOfDay
     List<String[]> filterDate = result.stream()
             .filter(o -> {
               long seconds = Long.parseLong(o[2]);
               LocalDateTime dateTime = LocalDateTime.ofEpochSecond(seconds, 0, ZoneOffset.ofHours(10));
-              System.out.println("DateTime: " + dateTime + ", threeDaysAgoOfStart: " + threeDaysAgoOfStart + ", startOfDay: " + startOfDay);
-              return dateTime.isAfter(threeDaysAgoOfStart) && dateTime.isBefore(startOfDay);
+              System.out.println("DateTime: " + dateTime + ", threeDaysAgoOfStart: " + threeDaysAgo + ", startOfDay: " + today);
+              return dateTime.isAfter(threeDaysAgo.atStartOfDay()) && dateTime.isBefore(today.atStartOfDay());
             })
             .collect(toList());
 
