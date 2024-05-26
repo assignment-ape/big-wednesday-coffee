@@ -116,8 +116,19 @@ public class PlaceholderTest {
         // call createPage method with mock data
         String filePath = "src/test/resources/mock_data.csv";
         String url = "file://" + new File(filePath).getAbsolutePath();
-        main.createPage(url,  LocalDate.of(2024, 5, 21));
+        main.createPage(url,  LocalDate.of(2024, 5, 20));
+        // check content of the generated index.html file
         Path indexPath = Paths.get("index.html");
         assertTrue("index.html file does not exist", Files.exists(indexPath));
+
+        List<String> lines = Files.readAllLines(indexPath);
+        String content = String.join("\n", lines);
+
+        // check if the HTML content contains the expected Google Maps link for each location
+        String[] testDataEntry = testData.get(1);
+        String latitude = testDataEntry[3];
+        String longitude = testDataEntry[4];
+        String expectedLink = String.format("href=\"https://www.google.com/maps/search/?api=1&query=%s,%s\"", latitude, longitude);
+        assertTrue("Google Maps link not found in index.html", content.contains(expectedLink));
     }
 }
