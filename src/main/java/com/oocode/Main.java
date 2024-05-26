@@ -50,6 +50,10 @@ public class Main {
       try (CSVReader reader = new CSVReader(new FileReader(url.substring(7)))) {
         result = reader.readAll().stream().skip(1).collect(toList());
       }
+      // Check if CSV is empty
+      if (result.isEmpty()) {
+        throw new RuntimeException("CSV file is empty: " + url);
+      }
     } else if (url.startsWith("http:") || url.startsWith("https:")) {
       // if its remote URL
       try (Response r = new OkHttpClient().newCall(new Request.Builder().url(url).build()).execute()) {
