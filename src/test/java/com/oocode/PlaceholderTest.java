@@ -31,8 +31,11 @@ public class PlaceholderTest {
 
     private static LocalDate today;
     private static LocalDate twoDaysAgo;
+    private static LocalDate fourDaysAgo;
+    private static LocalDateTime fourDaysAgoDateTime;
     private static LocalDateTime twoDaysAgoDateTime;
     private static String validDataFilePath;
+    private static String inValidDataFilePath;
     private static String emptyDataFilePath;
     private static String mapDataFilePath;
     private static String dayOfWeek;
@@ -41,10 +44,13 @@ public class PlaceholderTest {
     public static void setUpClass() throws IOException {
         today = LocalDate.now();
         twoDaysAgo = today.minusDays(2);
-        twoDaysAgoDateTime = twoDaysAgo.atStartOfDay();
+        fourDaysAgo = today.minusDays(4);
+        twoDaysAgoDateTime = today.minusDays(2).atStartOfDay();
+        fourDaysAgoDateTime = today.minusDays(4).atStartOfDay();
         dayOfWeek = twoDaysAgoDateTime.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.ENGLISH);
 
-        validDataFilePath = "src/test/resources/data_three_days_ago.csv";
+        validDataFilePath = "src/test/resources/data_two_days_ago.csv";
+        inValidDataFilePath = "src/test/resources/data_older_three_days.csv";
         emptyDataFilePath = "src/test/resources/empty_data.csv";
         mapDataFilePath = "src/test/resources/map_data.csv";
 
@@ -54,9 +60,16 @@ public class PlaceholderTest {
                 new String[]{"Caloundra", "12345", String.valueOf(twoDaysAgoDateTime.toEpochSecond(ZoneOffset.ofHours(10))), twoDaysAgo.toString(), "-26.7987", "153.1330", "1.960", "2.500"}
         );
 
+        // invalid CSV test data with the correct date two days ago
+        List<String[]> inValidTestData = Arrays.asList(
+                new String[]{"Site", "SiteNumber", "Seconds", "DateTime", "Latitude", "Longitude", "Hsig", "Hmax"},
+                new String[]{"Noosa", "4567", String.valueOf(fourDaysAgoDateTime.toEpochSecond(ZoneOffset.ofHours(10))), fourDaysAgo.toString(), "-26.34492", "153.11801", "1.270", "1.720"}
+        );
+
         // create valid and map data CSV files
         createCsvFile(validDataFilePath, validTestData);
         createCsvFile(mapDataFilePath, validTestData);
+        createCsvFile(inValidDataFilePath, inValidTestData);
 
         // create empty CSV file
         List<String[]> emptyTestData = new ArrayList<>();
@@ -84,19 +97,19 @@ public class PlaceholderTest {
     @Test
     public void testCreatePageWithInvalidData() throws Exception {
 
-        // path of CSV test data (valid data)
-        String filePath = "src/test/resources/data_three_days_ago.csv";
-        String url = "file://" + new File(filePath).getAbsolutePath();
+        // path of CSV test data (invalid data)
+        String inValidDataUrl = "file://" + new File(inValidDataFilePath).getAbsolutePath();
 
-        // call create page method with invalid date (older than three days)
-        LocalDate testDate = LocalDate.of(2024, 5, 9);
+        // call create page method with valid data and date
+        Main.createPage(inValidDataUrl, today);
 
-        try {
-            Main.createPage(url, testDate);
-            fail("Expected RuntimeException but no exception was thrown");
-        } catch (RuntimeException e) {
-            assertEquals("Data is not available for the past three days", e.getMessage());
-        }
+        // read index.html
+        List<String> lines = Files.readAllLines(Path.of("index.html"));
+        String content = String.join("\n", lines);
+
+        // check HTML content contains the expected string (invalid data)
+        String expectedString =  "Data is not available for the past three days";
+        assertThat(content, containsString(expectedString));
     }
 
     @Test
