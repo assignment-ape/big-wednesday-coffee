@@ -114,16 +114,13 @@ public class PlaceholderTest {
 
     @Test
     public void testCreatePageWithEmptyData() throws Exception {
-        // Path of CSV test data (invalid data)
-        String filePath = "src/test/resources/empty_data.csv";
-        String url = "file://" + new File(filePath).getAbsolutePath();
 
-        // call create page method with invalid date (future date)
-        LocalDate testDate = LocalDate.of(2024, 5, 12);
+        // call create page method with invalid date
+        String emptyDataUrl = "file://" + new File(emptyDataFilePath).getAbsolutePath();
 
         // check RuntimeException is thrown
         try {
-            Main.createPage(url, testDate);
+            Main.createPage(emptyDataUrl, today);
             fail("Expected RuntimeException but no exception was thrown");
         } catch (RuntimeException e) {
             assertTrue(e instanceof RuntimeException);
