@@ -17,8 +17,6 @@ import java.time.ZoneOffset;
 import java.time.format.TextStyle;
 import java.util.List;
 import java.util.Locale;
-
-import static java.lang.Integer.parseInt;
 import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.toList;
 
@@ -48,7 +46,7 @@ public class Main {
     } else if (url.startsWith("file:")) {
       // if its local file path
       try (CSVReader reader = new CSVReader(new FileReader(url.substring(7)))) {
-        result = reader.readAll().stream().skip(2).collect(toList());
+        result = reader.readAll().stream().skip(1).collect(toList());
       }
     } else if (url.startsWith("http:") || url.startsWith("https:")) {
       // if its remote URL
@@ -56,7 +54,7 @@ public class Main {
         if (r.isSuccessful()) {
           try (ResponseBody rb = r.body()) {
             try (CSVReader reader = new CSVReader(new StringReader(rb.string()))) {
-              result = reader.readAll().stream().skip(2).collect(toList());
+              result = reader.readAll().stream().skip(1).collect(toList());
             }
           }
         } else {
@@ -74,22 +72,27 @@ public class Main {
     // Check if the parsed dateTime is after threeDaysAgoOfStart and before startOfDay
     List<String[]> filterDate = result.stream()
             .filter(o -> {
-              LocalDateTime dateTime = LocalDateTime.ofEpochSecond(parseInt(o[2]), 0, ZoneOffset.ofHours(10));
+              long seconds = Long.parseLong(o[2]);
+              LocalDateTime dateTime = LocalDateTime.ofEpochSecond(seconds, 0, ZoneOffset.ofHours(10));
+              System.out.println("DateTime: " + dateTime + ", threeDaysAgoOfStart: " + threeDaysAgoOfStart + ", startOfDay: " + startOfDay);
               return dateTime.isAfter(threeDaysAgoOfStart) && dateTime.isBefore(startOfDay);
             })
             .collect(toList());
 
     if (filterDate.isEmpty()) {
-      throw new RuntimeException("Data is not available for the past three days");
+      // if no data is available for the past three days, display a message in the HTML
+      String message = "Data is not available for the past three days";
+      generateHtmlWithMessage(message);
+      return;
     }
 
-    String[] strings = filterDate.stream().max(comparing(o -> Double.valueOf(o[7]))).orElse(null);
+    String[] strings = filterDate.stream().max(comparing(o -> Double.valueOf(o[6]))).orElse(null);
 
     // Define latitude and longitude
     String latitude = strings[4];
     String longitude = strings[5];
     String mapTitle = strings[0];
-    LocalDateTime waveDateTime = LocalDateTime.ofEpochSecond(parseInt(strings[2]), 0, ZoneOffset.ofHours(10));
+    LocalDateTime waveDateTime = LocalDateTime.ofEpochSecond(Long.parseLong(strings[2]), 0, ZoneOffset.ofHours(10));
 
     // Create Google Maps link
     String googleMapsLink = String.format(
@@ -99,7 +102,7 @@ public class Main {
 
     // create HTML content
     String htmlContent = String.format("<html><body>You should have been at %s on %s - it was gnarly - waves up to %sm! %s</body></html>",
-            mapTitle, waveDateTime.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.ENGLISH), longitude, googleMapsLink);
+            mapTitle, waveDateTime.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.ENGLISH), strings[6], googleMapsLink);
 
     // Write HTML content to file
     try (FileWriter writer = new FileWriter("index.html")) {

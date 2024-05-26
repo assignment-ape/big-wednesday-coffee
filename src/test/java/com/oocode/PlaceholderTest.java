@@ -1,7 +1,9 @@
 package com.oocode;
 import org.junit.Test;
 import org.mockito.ArgumentMatchers;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.IOException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -9,6 +11,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -79,20 +83,32 @@ public class PlaceholderTest {
 
     @Test
     public void testGoogleMapsLinkInIndexHtml() throws Exception {
-        // data with map link
+        LocalDate today = LocalDate.now();
+        LocalDate twoDaysAgo = today.minusDays(2);
+        LocalDateTime threeDaysAgoDateTime = twoDaysAgo.atStartOfDay();
+
+        // Generate CSV test data with the correct date three days ago
+        List<String[]> testData = Arrays.asList(
+                new String[]{"Site", "SiteNumber", "Seconds", "DateTime", "Latitude", "Longitude", "Hsig", "Hmax"},
+                new String[]{"Caloundra", "12345", String.valueOf(threeDaysAgoDateTime.toEpochSecond(ZoneOffset.ofHours(10))), twoDaysAgo.toString(), "-26.7987", "153.1330", "1.960", "2.500"}
+        );
+
+        // Path of CSV test data
         String filePath = "src/test/resources/map_data.csv";
+        createCsvFile(filePath, testData);
+
+        // data with map link
         String url = "file://" + new File(filePath).getAbsolutePath();
 
         // call createPage method with valid data and date
-        LocalDate testDate = LocalDate.of(2024, 3, 4);
-        Main.createPage(url, testDate);
+        Main.createPage(url, today);
 
         // read index.html
         List<String> lines = Files.readAllLines(Path.of("index.html"));
         String content = String.join("\n", lines);
 
         // check if HTML contains the expected Google Maps link
-        String expectedLink = "href=\"https://www.google.com/maps/search/?api=1&query=-28.16135,153.56055\"";
+        String expectedLink = "href=\"https://www.google.com/maps/search/?api=1&query=-26.7987,153.1330\"";
         assertThat(content, containsString(expectedLink));
     }
 
@@ -130,5 +146,14 @@ public class PlaceholderTest {
         String longitude = testDataEntry[4];
         String expectedLink = String.format("href=\"https://www.google.com/maps/search/?api=1&query=%s,%s\"", latitude, longitude);
         assertTrue("Google Maps link not found in index.html", content.contains(expectedLink));
+    }
+
+    private void createCsvFile(String filePath, List<String[]> data) throws IOException {
+        try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(filePath))) {
+            for (String[] line : data) {
+                writer.write(String.join(",", line));
+                writer.newLine();
+            }
+        }
     }
 }
