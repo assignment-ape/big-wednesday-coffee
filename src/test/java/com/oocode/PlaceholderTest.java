@@ -14,9 +14,11 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.format.TextStyle;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 import static org.mockito.ArgumentMatchers.any;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -33,12 +35,14 @@ public class PlaceholderTest {
     private static String validDataFilePath;
     private static String emptyDataFilePath;
     private static String mapDataFilePath;
+    private static String dayOfWeek;
 
     @BeforeClass
     public static void setUpClass() throws IOException {
         today = LocalDate.now();
         twoDaysAgo = today.minusDays(2);
         twoDaysAgoDateTime = twoDaysAgo.atStartOfDay();
+        dayOfWeek = twoDaysAgoDateTime.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.ENGLISH);
 
         validDataFilePath = "src/test/resources/data_three_days_ago.csv";
         emptyDataFilePath = "src/test/resources/empty_data.csv";
@@ -63,20 +67,18 @@ public class PlaceholderTest {
     public void testCreatePageWithValidData() throws Exception {
 
         // path of CSV test data (valid data)
-        String filePath = "src/test/resources/data_three_days_ago.csv";
-        String url = "file://" + new File(filePath).getAbsolutePath();
+        String validDataUrl = "file://" + new File(validDataFilePath).getAbsolutePath();
 
         // call create page method with valid data and date
-        LocalDate testDate = LocalDate.of(2024, 5, 12);
-        Main.createPage(url, testDate);
+        Main.createPage(validDataUrl, today);
 
         // read index.html
         List<String> lines = Files.readAllLines(Path.of("index.html"));
         String content = String.join("\n", lines);
 
         // check HTML content contains the expected string
-        String expected_string =  "You should have been at Caloundra on Thursday - it was gnarly - waves up to 1.960m!";
-        assertThat(content, containsString(expected_string));
+        String expectedString = String.format("You should have been at Caloundra on %s - it was gnarly - waves up to 1.960m!", dayOfWeek);
+        assertThat(content, containsString(expectedString));
     }
 
     @Test
