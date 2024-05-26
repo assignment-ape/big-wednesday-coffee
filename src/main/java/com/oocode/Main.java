@@ -43,13 +43,15 @@ public class Main {
 
   public static void createPage(String url, LocalDate today) throws Exception {
     List<String[]> result;
-    if (url.startsWith("file:")) {
-      // Local file path
-      try (CSVReader reader = new CSVReader(new FileReader(url.substring(5)))) {
+    if (url == null || url.isEmpty()) {
+      throw new IllegalArgumentException("URL cannot be null or empty");
+    } else if (url.startsWith("file:")) {
+      // if its local file path
+      try (CSVReader reader = new CSVReader(new FileReader(url.substring(7)))) {
         result = reader.readAll().stream().skip(2).collect(toList());
       }
-    } else {
-      // Remote URL
+    } else if (url.startsWith("http:") || url.startsWith("https:")) {
+      // if its remote URL
       try (Response r = new OkHttpClient().newCall(new Request.Builder().url(url).build()).execute()) {
         if (r.isSuccessful()) {
           try (ResponseBody rb = r.body()) {
@@ -61,6 +63,8 @@ public class Main {
           throw new RuntimeException("Failed to fetch CSV data from URL: " + url);
         }
       }
+    } else {
+      throw new IllegalArgumentException("Unsupported URL scheme: " + url);
     }
 
     // Find three days ago at the start of the day
@@ -115,5 +119,12 @@ public class Main {
     server.setExecutor(null);
     server.start();
     System.out.println("Server is listening on port 8080");
+  }
+
+  private static void generateHtmlWithMessage(String message) throws IOException {
+    String htmlContent = String.format("<html><body>%s</body></html>", message);
+    try (FileWriter writer = new FileWriter("index.html")) {
+      writer.write(htmlContent);
+    }
   }
 }
