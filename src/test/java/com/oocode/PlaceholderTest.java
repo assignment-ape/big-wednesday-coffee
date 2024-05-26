@@ -1,4 +1,5 @@
 package com.oocode;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.ArgumentMatchers;
 import java.io.BufferedWriter;
@@ -13,6 +14,7 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -24,6 +26,38 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class PlaceholderTest {
+
+    private static LocalDate today;
+    private static LocalDate twoDaysAgo;
+    private static LocalDateTime twoDaysAgoDateTime;
+    private static String validDataFilePath;
+    private static String emptyDataFilePath;
+    private static String mapDataFilePath;
+
+    @BeforeClass
+    public static void setUpClass() throws IOException {
+        today = LocalDate.now();
+        twoDaysAgo = today.minusDays(2);
+        twoDaysAgoDateTime = twoDaysAgo.atStartOfDay();
+
+        validDataFilePath = "src/test/resources/data_three_days_ago.csv";
+        emptyDataFilePath = "src/test/resources/empty_data.csv";
+        mapDataFilePath = "src/test/resources/map_data.csv";
+
+        // valid CSV test data with the correct date two days ago
+        List<String[]> validTestData = Arrays.asList(
+                new String[]{"Site", "SiteNumber", "Seconds", "DateTime", "Latitude", "Longitude", "Hsig", "Hmax"},
+                new String[]{"Caloundra", "12345", String.valueOf(twoDaysAgoDateTime.toEpochSecond(ZoneOffset.ofHours(10))), twoDaysAgo.toString(), "-26.7987", "153.1330", "1.960", "2.500"}
+        );
+
+        // create valid and map data CSV files
+        createCsvFile(validDataFilePath, validTestData);
+        createCsvFile(mapDataFilePath, validTestData);
+
+        // create empty CSV file
+        List<String[]> emptyTestData = new ArrayList<>();
+        createCsvFile(emptyDataFilePath, emptyTestData);
+    }
 
     @Test
     public void testCreatePageWithValidData() throws Exception {
@@ -148,7 +182,7 @@ public class PlaceholderTest {
         assertTrue("Google Maps link not found in index.html", content.contains(expectedLink));
     }
 
-    private void createCsvFile(String filePath, List<String[]> data) throws IOException {
+    private static void createCsvFile(String filePath, List<String[]> data) throws IOException {
         try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(filePath))) {
             for (String[] line : data) {
                 writer.write(String.join(",", line));
