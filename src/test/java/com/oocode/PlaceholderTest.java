@@ -39,7 +39,7 @@ public class PlaceholderTest {
     private static String emptyDataFilePath;
     private static String mapDataFilePath;
     private static String dayOfWeek;
-
+    private static String mockDataFilePath;
     @BeforeClass
     public static void setUpClass() throws IOException {
         today = LocalDate.now();
@@ -53,6 +53,7 @@ public class PlaceholderTest {
         inValidDataFilePath = "src/test/resources/data_older_three_days.csv";
         emptyDataFilePath = "src/test/resources/empty_data.csv";
         mapDataFilePath = "src/test/resources/map_data.csv";
+        mockDataFilePath = "src/test/resources/mock_data.csv";
 
         // valid CSV test data with the correct date two days ago
         List<String[]> validTestData = Arrays.asList(
@@ -148,9 +149,11 @@ public class PlaceholderTest {
     @Test
     public void testCreatePageWithMockData() throws Exception {
         List<String[]> testData = Arrays.asList(
-                new String[]{"Location", "Date", "Time", "Latitude", "Longitude", "Wave Height"},
-                new String[]{"Hay Point TriAxys", "2024-05-21", "1716608400", "-21.27760", "149.32260", "0.800"}
+                new String[]{"Site", "SiteNumber", "Seconds", "DateTime", "Latitude", "Longitude","Hsig", "Hmax"},
+                new String[]{"Hay Point TriAxys", "4567", String.valueOf(twoDaysAgoDateTime.toEpochSecond(ZoneOffset.ofHours(10))),
+                        twoDaysAgo.toString(), "-21.27760", "149.32260", "0.800", "1.040"}
         );
+        createCsvFile(mockDataFilePath, testData);
 
         // create mock HttpClient and  HTTP response
         HttpClient mockHttpClient = mock(HttpClient.class);
@@ -162,10 +165,12 @@ public class PlaceholderTest {
         // call mock Main instance with mock HttpClient
         Main main = new Main(mockHttpClient);
 
-        // call createPage method with mock data
-        String filePath = "src/test/resources/mock_data.csv";
-        String url = "file://" + new File(filePath).getAbsolutePath();
-        main.createPage(url,  LocalDate.of(2024, 5, 20));
+        // path of CSV test data (valid data)
+        String mockDataUrl = "file://" + new File(mockDataFilePath).getAbsolutePath();
+
+        // call create page method with valid data and date
+        Main.createPage(mockDataUrl, today);
+
         // check content of the generated index.html file
         Path indexPath = Paths.get("index.html");
         assertTrue("index.html file does not exist", Files.exists(indexPath));
@@ -175,8 +180,9 @@ public class PlaceholderTest {
 
         // check if the HTML content contains the expected Google Maps link for each location
         String[] testDataEntry = testData.get(1);
-        String latitude = testDataEntry[3];
-        String longitude = testDataEntry[4];
+        String latitude = testDataEntry[4];
+        String longitude = testDataEntry[5];
+
         String expectedLink = String.format("href=\"https://www.google.com/maps/search/?api=1&query=%s,%s\"", latitude, longitude);
         assertTrue("Google Maps link not found in index.html", content.contains(expectedLink));
     }
