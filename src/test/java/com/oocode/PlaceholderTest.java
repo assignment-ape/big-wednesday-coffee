@@ -129,25 +129,12 @@ public class PlaceholderTest {
 
     @Test
     public void testGoogleMapsLinkInIndexHtml() throws Exception {
-        LocalDate today = LocalDate.now();
-        LocalDate twoDaysAgo = today.minusDays(2);
-        LocalDateTime threeDaysAgoDateTime = twoDaysAgo.atStartOfDay();
 
-        // Generate CSV test data with the correct date three days ago
-        List<String[]> testData = Arrays.asList(
-                new String[]{"Site", "SiteNumber", "Seconds", "DateTime", "Latitude", "Longitude", "Hsig", "Hmax"},
-                new String[]{"Caloundra", "12345", String.valueOf(threeDaysAgoDateTime.toEpochSecond(ZoneOffset.ofHours(10))), twoDaysAgo.toString(), "-26.7987", "153.1330", "1.960", "2.500"}
-        );
+        // path of CSV test data (valid data)
+        String mapDataUrl = "file://" + new File(mapDataFilePath).getAbsolutePath();
 
-        // Path of CSV test data
-        String filePath = "src/test/resources/map_data.csv";
-        createCsvFile(filePath, testData);
-
-        // data with map link
-        String url = "file://" + new File(filePath).getAbsolutePath();
-
-        // call createPage method with valid data and date
-        Main.createPage(url, today);
+        // call create page method with valid data and date
+        Main.createPage(mapDataUrl, today);
 
         // read index.html
         List<String> lines = Files.readAllLines(Path.of("index.html"));
